@@ -5,10 +5,10 @@
 #include "core/flameshotdaemon.h"
 #if defined(Q_OS_MACOS) || defined(Q_OS_WIN)
 #include "qhotkey.h"
+#include <QWindow>
 #endif
 
 #if defined(Q_OS_MACOS)
-#include <QWindow>
 #include <objc/message.h>
 
 namespace {
@@ -186,6 +186,9 @@ CaptureWidget* Flameshot::gui(const CaptureRequest& req)
 
 #ifdef Q_OS_WIN
         m_captureWindow->show();
+        if (auto* window = m_captureWindow->windowHandle()) {
+            window->requestActivate();
+        }
 #elif defined(Q_OS_MACOS)
         if (ConfigHandler().useNativeFullscreen()) {
             m_captureWindow->showFullScreen();
