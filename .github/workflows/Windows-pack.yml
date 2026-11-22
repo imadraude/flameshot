@@ -5,6 +5,7 @@ on:
     branches:
       - master
       - fix*
+      - windows-fork
     paths-ignore:
       - '*.md'
       - 'LICENSE'
