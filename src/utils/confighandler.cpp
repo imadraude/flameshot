@@ -20,6 +20,8 @@
 
 #if defined(Q_OS_MACOS)
 #include <QProcess>
+#elif defined(Q_OS_WIN)
+#include "utils/winautostart.h"
 #endif
 
 // HELPER FUNCTIONS
@@ -33,12 +35,7 @@ bool verifyLaunchFile()
                    "Flameshot.desktop";
     bool res = QFile(path).exists();
 #elif defined(Q_OS_WIN)
-    QSettings bootUpSettings(
-      "HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run",
-      QSettings::NativeFormat);
-    bool res =
-      bootUpSettings.value("Flameshot").toString() ==
-      QDir::toNativeSeparators(QCoreApplication::applicationFilePath());
+    bool res = WinAutostart::verifyStartupLaunch();
 #endif
     return res;
 }
@@ -269,18 +266,33 @@ ConfigHandler* ConfigHandler::getInstance()
 bool ConfigHandler::startupLaunch()
 {
     bool res = value(QStringLiteral("startupLaunch")).toBool();
+#if defined(Q_OS_WIN)
+    bool active = verifyLaunchFile();
+    if (res != active) {
+        if (WinAutostart::isProcessElevated()) {
+            setStartupLaunch(res);
+            active = verifyLaunchFile();
+        }
+        return active;
+    }
+    return res;
+#else
     if (res != verifyLaunchFile()) {
         setStartupLaunch(res);
     }
     return res;
+#endif
 }
 
 void ConfigHandler::setStartupLaunch(const bool start)
 {
-    if (start == value(QStringLiteral("startupLaunch")).toBool()) {
+    if (start == value(QStringLiteral("startupLaunch")).toBool() &&
+        start == verifyLaunchFile()) {
         return;
     }
+#if !defined(Q_OS_WIN)
     setValue(QStringLiteral("startupLaunch"), start);
+#endif
 #if defined(Q_OS_MACOS)
     /* TODO - there should be more correct way via API, but didn't find it
      without extra dependencies, there should be something like that:
@@ -330,32 +342,11 @@ void ConfigHandler::setStartupLaunch(const bool start)
         file.remove();
     }
 #elif defined(Q_OS_WIN)
-    QSettings bootUpSettings(
-      "HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run",
-      QSettings::NativeFormat);
-    // set workdir for flameshot on startup
-    QSettings bootUpPath(
-      "HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App "
-      "Paths",
-      QSettings::NativeFormat);
-    if (start) {
-        QString app_path =
-          QDir::toNativeSeparators(QCoreApplication::applicationFilePath());
-        bootUpSettings.setValue("Flameshot", app_path);
-
-        // set application workdir
-        bootUpPath.beginGroup("flameshot.exe");
-        bootUpPath.setValue("Path", QCoreApplication::applicationDirPath());
-        bootUpPath.endGroup();
-
-    } else {
-        bootUpSettings.remove("Flameshot");
-
-        // remove application workdir
-        bootUpPath.beginGroup("flameshot.exe");
-        bootUpPath.remove("");
-        bootUpPath.endGroup();
+    if (!WinAutostart::setStartupLaunch(start)) {
+        qWarning() << "Unable to update Windows elevated startup task.";
+        return;
     }
+    setValue(QStringLiteral("startupLaunch"), start);
 #endif
 }
 

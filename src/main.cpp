@@ -247,6 +247,9 @@ int main(int argc, char* argv[])
         configureApp(true, translator, qtTranslator);
         auto c = Flameshot::instance();
         FlameshotDaemon::start();
+#if defined(Q_OS_WIN)
+        ConfigHandler().startupLaunch();
+#endif
 
 #if defined(USE_KDSINGLEAPPLICATION) &&                                        \
   (defined(Q_OS_MACOS) || defined(Q_OS_WIN))
@@ -661,8 +664,15 @@ int main(int argc, char* argv[])
             ConfigHandler config;
 
             if (autostart) {
-                config.setStartupLaunch(parser.value(autostartOption) ==
-                                        "true");
+                const bool enableAutostart =
+                  parser.value(autostartOption) == "true";
+                config.setStartupLaunch(enableAutostart);
+#if defined(Q_OS_WIN)
+                if (config.startupLaunch() != enableAutostart) {
+                    delete qApp;
+                    return 1;
+                }
+#endif
             }
             if (notification) {
                 config.setShowDesktopNotification(

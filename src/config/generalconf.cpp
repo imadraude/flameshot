@@ -190,6 +190,7 @@ void GeneralConf::autoCloseIdleDaemonChanged(bool checked)
 void GeneralConf::autostartChanged(bool checked)
 {
     ConfigHandler().setStartupLaunch(checked);
+    m_autostart->setChecked(ConfigHandler().startupLaunch());
 }
 
 void GeneralConf::importConfiguration()

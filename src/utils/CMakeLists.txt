@@ -39,6 +39,8 @@ ENDIF()
 IF (WIN32)
   target_sources(
     flameshot
-    PRIVATE winlnkfileparse.cpp
+    PRIVATE winautostart.h
+            winautostart.cpp
+            winlnkfileparse.cpp
   )
 ENDIF()

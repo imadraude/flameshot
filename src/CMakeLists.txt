@@ -268,6 +268,11 @@ if (WIN32)
     target_link_libraries(
             flameshot
             qhotkey
+            taskschd
+            ole32
+            oleaut32
+            advapi32
+            shell32
     )
 endif ()
 
