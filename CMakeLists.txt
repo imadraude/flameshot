@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.22)
 # cmake_policy(SET CMP0076 OLD)
 
-set(FLAMESHOT_VERSION 15.0.2)
+set(FLAMESHOT_VERSION 15.0.3)
 
 set(GIT_API_URL "https://api.github.com/repos/imadraude/flameshot/releases/latest")
 
